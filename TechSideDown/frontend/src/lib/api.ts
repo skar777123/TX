@@ -57,6 +57,22 @@ export const getMyTransactions = async () => {
     return response.data;
 };
 
+// Notifications API
+export const createNotification = async (data: any) => {
+    const response = await api.post('/notifications', data);
+    return response.data;
+};
+
+export const getMyNotifications = async () => {
+    const response = await api.get('/notifications/my-notifications');
+    return response.data;
+};
+
+export const markNotificationAsRead = async (id: string) => {
+    const response = await api.patch(`/notifications/${id}/read`);
+    return response.data;
+};
+
 export const getEvents = async () => {
     // ... existing code ...
     const response = await api.get('/events');

@@ -28,6 +28,9 @@ export class AuthService {
         await this.transactionsService.create(user._id, 'USER', 'LOGIN', { username: user.username });
         return {
             access_token: this.jwtService.sign(payload),
+            userId: user._id,
+            username: user.username,
+            role: user.role,
         };
     }
 
