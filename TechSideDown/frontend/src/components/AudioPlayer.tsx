@@ -1,35 +1,104 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, forwardRef, useImperativeHandle, useCallback } from 'react';
 
-const AudioPlayer = () => {
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const audioSrc = "/audio/bgsong.mp3";
+export interface AudioPlayerHandle {
+  play: () => void;
+  pause: () => void;
+  toggle: () => void;
+  isPlaying: () => boolean;
+}
 
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = 0.5;
-    }
-  }, []);
+interface AudioPlayerProps {
+  onPlayStateChange?: (isPlaying: boolean) => void;
+}
 
-  // Auto-play on mount
-  useEffect(() => {
-    const playAudio = async () => {
+const AudioPlayer = forwardRef<AudioPlayerHandle, AudioPlayerProps>(
+  ({ onPlayStateChange }, ref) => {
+    const audioRef = useRef<HTMLAudioElement>(null);
+    const isPlayingRef = useRef(false);
+    const onPlayStateChangeRef = useRef(onPlayStateChange);
+
+    // Keep callback ref updated
+    useEffect(() => {
+      onPlayStateChangeRef.current = onPlayStateChange;
+    }, [onPlayStateChange]);
+
+    const notifyStateChange = useCallback((playing: boolean) => {
+      isPlayingRef.current = playing;
+      onPlayStateChangeRef.current?.(playing);
+    }, []);
+
+    useImperativeHandle(ref, () => ({
+      play: () => {
+        if (audioRef.current) {
+          audioRef.current.play().then(() => {
+            notifyStateChange(true);
+          }).catch(() => {
+            // Handle autoplay block
+          });
+        }
+      },
+      pause: () => {
+        if (audioRef.current) {
+          audioRef.current.pause();
+          notifyStateChange(false);
+        }
+      },
+      toggle: () => {
+        if (audioRef.current) {
+          if (audioRef.current.paused) {
+            audioRef.current.play().then(() => {
+              notifyStateChange(true);
+            }).catch(() => {
+              // Handle autoplay block
+            });
+          } else {
+            audioRef.current.pause();
+            notifyStateChange(false);
+          }
+        }
+      },
+      isPlaying: () => isPlayingRef.current,
+    }), [notifyStateChange]);
+
+    const audioSrc = "/audio/bgsong.mp3";
+
+    useEffect(() => {
       if (audioRef.current) {
+        audioRef.current.volume = 0.5;
+      }
+    }, []);
+
+    // Auto-play on mount
+    useEffect(() => {
+      const audio = audioRef.current;
+      if (!audio) return;
+
+      const tryPlay = async () => {
         try {
-          await audioRef.current.play();
-        } catch (error) {
-          // Browser may block autoplay, add click listener to start
-          const startAudio = () => {
-            audioRef.current?.play();
+          await audio.play();
+          notifyStateChange(true);
+        } catch {
+          // Browser blocked autoplay, wait for user interaction
+          const startAudio = async () => {
+            try {
+              await audio.play();
+              notifyStateChange(true);
+            } catch {
+              // Still blocked
+            }
             document.removeEventListener('click', startAudio);
           };
-          document.addEventListener('click', startAudio);
+          document.addEventListener('click', startAudio, { once: true });
         }
-      }
-    };
-    playAudio();
-  }, []);
+      };
 
-  return <audio ref={audioRef} src={audioSrc} loop />;
-};
+      tryPlay();
+    }, [notifyStateChange]);
+
+    return <audio ref={audioRef} src={audioSrc} loop />;
+  }
+);
+
+AudioPlayer.displayName = 'AudioPlayer';
 
 export default AudioPlayer;

@@ -1,50 +1,21 @@
-import { memo, useMemo } from 'react';
+import { memo } from 'react';
 
 const VecnaVeins = memo(() => {
-  // Pre-generate vein paths once
-  const veins = useMemo(() => {
-    const generateVeinPath = (startX: number, startY: number, length: number, direction: 'up' | 'down' | 'left' | 'right') => {
-      let path = `M ${startX} ${startY}`;
-      let x = startX;
-      let y = startY;
-      
-      for (let i = 0; i < length; i++) {
-        const variation = (i % 3) * 10 - 10;
-        
-        switch (direction) {
-          case 'up': y -= 30; x += variation; break;
-          case 'down': y += 30; x += variation; break;
-          case 'left': x -= 30; y += variation; break;
-          case 'right': x += 30; y += variation; break;
-        }
-        
-        path += ` L ${x} ${y}`;
-      }
-      
-      return path;
-    };
-
-    return [
-      { path: generateVeinPath(0, 200, 15, 'right'), delay: 0 },
-      { path: generateVeinPath(0, 600, 18, 'right'), delay: 1 },
-      { path: generateVeinPath(1920, 300, 15, 'left'), delay: 0.5 },
-      { path: generateVeinPath(1920, 700, 16, 'left'), delay: 1.5 },
-      { path: generateVeinPath(500, 0, 12, 'down'), delay: 0.3 },
-      { path: generateVeinPath(1400, 0, 14, 'down'), delay: 1.2 },
-      { path: generateVeinPath(400, 1080, 12, 'up'), delay: 0.8 },
-      { path: generateVeinPath(1500, 1080, 14, 'up'), delay: 1.8 },
-    ];
-  }, []);
-
   return (
-    <div className="fixed inset-0 pointer-events-none z-30 overflow-hidden">
+    // z-20 - visible layer, behind navbar (z-50) but over main content
+    <div className="fixed inset-0 pointer-events-none z-20 overflow-hidden">
       <svg
         className="w-full h-full"
         viewBox="0 0 1920 1080"
         preserveAspectRatio="xMidYMid slice"
       >
         <defs>
-          <filter id="vein-glow" x="-50%" y="-50%" width="200%" height="200%">
+          <linearGradient id="vein-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#2a0505" stopOpacity="0" />
+            <stop offset="50%" stopColor="#b91c1c" stopOpacity="1" />
+            <stop offset="100%" stopColor="#2a0505" stopOpacity="0" />
+          </linearGradient>
+          <filter id="glow">
             <feGaussianBlur stdDeviation="3" result="blur" />
             <feMerge>
               <feMergeNode in="blur" />
@@ -53,20 +24,70 @@ const VecnaVeins = memo(() => {
           </filter>
         </defs>
 
-        {veins.map((vein, index) => (
-          <path
-            key={index}
-            d={vein.path}
-            fill="none"
-            stroke="hsl(0, 72%, 40%)"
-            strokeWidth="2"
-            strokeLinecap="round"
-            filter="url(#vein-glow)"
-            className="animate-vein-pulse"
-            style={{ animationDelay: `${vein.delay}s` }}
-            opacity="0.5"
-          />
-        ))}
+        {/* Left side veins */}
+        <path
+          d="M0,200 Q80,180 120,220 Q180,280 200,250 Q280,200 350,260 Q420,320 500,280"
+          fill="none"
+          stroke="url(#vein-grad)"
+          strokeWidth="3"
+          filter="url(#glow)"
+          opacity="0.7"
+          className="animate-vein-pulse"
+        />
+        <path
+          d="M0,600 Q100,580 150,640 Q220,720 300,680 Q380,620 450,700"
+          fill="none"
+          stroke="url(#vein-grad)"
+          strokeWidth="2.5"
+          filter="url(#glow)"
+          opacity="0.6"
+          className="animate-vein-pulse"
+          style={{ animationDelay: '2s' }}
+        />
+
+        {/* Right side veins */}
+        <path
+          d="M1920,300 Q1840,280 1780,340 Q1700,420 1620,380 Q1540,320 1460,400"
+          fill="none"
+          stroke="url(#vein-grad)"
+          strokeWidth="3"
+          filter="url(#glow)"
+          opacity="0.7"
+          className="animate-vein-pulse"
+          style={{ animationDelay: '1s' }}
+        />
+        <path
+          d="M1920,750 Q1820,720 1760,800 Q1680,880 1580,820"
+          fill="none"
+          stroke="url(#vein-grad)"
+          strokeWidth="2.5"
+          filter="url(#glow)"
+          opacity="0.6"
+          className="animate-vein-pulse"
+          style={{ animationDelay: '3s' }}
+        />
+
+        {/* Top veins */}
+        <path
+          d="M700,0 Q720,80 680,140 Q620,220 680,300 Q740,380 700,460"
+          fill="none"
+          stroke="url(#vein-grad)"
+          strokeWidth="2.5"
+          filter="url(#glow)"
+          opacity="0.6"
+          className="animate-vein-pulse"
+          style={{ animationDelay: '0.5s' }}
+        />
+        <path
+          d="M1300,0 Q1280,100 1340,180 Q1400,260 1340,360"
+          fill="none"
+          stroke="url(#vein-grad)"
+          strokeWidth="2.5"
+          filter="url(#glow)"
+          opacity="0.6"
+          className="animate-vein-pulse"
+          style={{ animationDelay: '2.5s' }}
+        />
       </svg>
     </div>
   );

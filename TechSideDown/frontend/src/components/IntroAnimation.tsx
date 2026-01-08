@@ -1,29 +1,29 @@
-import { useState, useEffect, useMemo, memo } from 'react';
+import { useState, useEffect, useMemo, memo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import mindFlayerImg from '@/assets/mindflayer.png';
 
 interface IntroAnimationProps {
   onComplete: () => void;
 }
 
-// Pre-generate vein paths at module level to avoid computation on mount
+// Pre-generate vein paths at module level
 const generateVeinPath = (startX: number, startY: number, length: number, direction: number) => {
   let path = `M ${startX} ${startY}`;
   let x = startX;
   let y = startY;
-  
+
   for (let i = 0; i < length; i++) {
     const dx = Math.cos(direction) * (15 + Math.random() * 10);
     const dy = Math.sin(direction) * (15 + Math.random() * 10);
     direction += (Math.random() - 0.5) * 0.5;
     x += dx;
     y += dy;
-    path += ` Q ${x - dx/2 + (Math.random() - 0.5) * 8} ${y - dy/2 + (Math.random() - 0.5) * 8} ${x} ${y}`;
+    path += ` Q ${x - dx / 2 + (Math.random() - 0.5) * 8} ${y - dy / 2 + (Math.random() - 0.5) * 8} ${x} ${y}`;
   }
-  
+
   return path;
 };
 
-// Static vein data - computed once
 const STATIC_VEINS = [
   { path: generateVeinPath(0, 200, 8, 0.3), delay: 0 },
   { path: generateVeinPath(0, 500, 10, 0.1), delay: 0.4 },
@@ -33,8 +33,15 @@ const STATIC_VEINS = [
 
 const IntroAnimation = memo(({ onComplete }: IntroAnimationProps) => {
   const [phase, setPhase] = useState<'zoom' | 'reveal' | 'subtitle' | 'fadeout'>('zoom');
+  const [showGlimpse, setShowGlimpse] = useState(false);
   const title = "TECHXPRESSION";
   const subtitle = "THE TECHSIDE DOWN";
+
+  // Trigger a brief MindFlayer glimpse with glow
+  const triggerGlimpse = useCallback(() => {
+    setShowGlimpse(true);
+    setTimeout(() => setShowGlimpse(false), 150);
+  }, []);
 
   useEffect(() => {
     const timers = [
@@ -44,11 +51,22 @@ const IntroAnimation = memo(({ onComplete }: IntroAnimationProps) => {
       setTimeout(() => onComplete(), 6000),
     ];
 
-    return () => timers.forEach(clearTimeout);
-  }, [onComplete]);
+    // Random 1-4 glimpses during intro
+    const glimpseCount = 1 + Math.floor(Math.random() * 4);
+    const glimpseTimers: ReturnType<typeof setTimeout>[] = [];
 
-  // Reduced particles with CSS animation
-  const particles = useMemo(() => 
+    for (let i = 0; i < glimpseCount; i++) {
+      const delay = 1000 + Math.random() * 3000;
+      glimpseTimers.push(setTimeout(triggerGlimpse, delay));
+    }
+
+    return () => {
+      timers.forEach(clearTimeout);
+      glimpseTimers.forEach(clearTimeout);
+    };
+  }, [onComplete, triggerGlimpse]);
+
+  const particles = useMemo(() =>
     Array.from({ length: 15 }, (_, i) => ({
       id: i,
       x: Math.random() * 100,
@@ -66,16 +84,41 @@ const IntroAnimation = memo(({ onComplete }: IntroAnimationProps) => {
           exit={{ opacity: 0 }}
           transition={{ duration: 1 }}
         >
-          {/* Simple dark background */}
+          {/* Dark background */}
           <div className="absolute inset-0 bg-gradient-to-b from-black via-[#0a0000] to-black" />
-          
-          {/* Red fog - simplified */}
-          <div 
+
+          {/* Glow effect on glimpse */}
+          {showGlimpse && (
+            <div
+              className="absolute inset-0 z-[16]"
+              style={{
+                background: 'radial-gradient(ellipse 100% 70% at 50% 0%, rgba(255,100,80,0.12) 0%, transparent 60%)',
+              }}
+            />
+          )}
+
+          {/* MindFlayer glimpse */}
+          <div
+            className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-[15%] z-[2] transition-opacity duration-100"
+            style={{ opacity: showGlimpse ? 0.25 : 0.08 }}
+          >
+            <img
+              src={mindFlayerImg}
+              alt=""
+              className="w-[1200px] h-auto object-contain"
+              style={{
+                filter: 'brightness(0.3) contrast(1.2)',
+              }}
+            />
+          </div>
+
+          {/* Red fog */}
+          <div
             className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-red-900/20 rounded-full opacity-40"
             style={{ filter: 'blur(80px)' }}
           />
 
-          {/* Particles with CSS animation */}
+          {/* Particles */}
           <div className="absolute inset-0 overflow-hidden">
             {particles.map((particle) => (
               <div
@@ -93,14 +136,14 @@ const IntroAnimation = memo(({ onComplete }: IntroAnimationProps) => {
             ))}
           </div>
 
-          {/* Vecna Veins - simplified */}
+          {/* Vecna Veins */}
           <svg className="absolute inset-0 w-full h-full pointer-events-none z-[5]">
             <defs>
               <filter id="intro-vein-glow">
-                <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                <feGaussianBlur stdDeviation="2" result="coloredBlur" />
                 <feMerge>
-                  <feMergeNode in="coloredBlur"/>
-                  <feMergeNode in="SourceGraphic"/>
+                  <feMergeNode in="coloredBlur" />
+                  <feMergeNode in="SourceGraphic" />
                 </feMerge>
               </filter>
             </defs>
@@ -123,29 +166,27 @@ const IntroAnimation = memo(({ onComplete }: IntroAnimationProps) => {
             ))}
           </svg>
 
-          {/* Main Title Container */}
+          {/* Main Title */}
           <motion.div
             className="relative z-10 will-change-transform"
             initial={{ scale: 0.4, opacity: 0 }}
-            animate={{ 
+            animate={{
               scale: phase === 'zoom' ? 0.4 : 1,
               opacity: phase === 'zoom' ? 0 : 1,
             }}
-            transition={{ 
+            transition={{
               duration: 2.5,
               ease: [0.25, 0.1, 0.25, 1],
             }}
           >
-            {/* Title */}
             <h1 className="relative text-center">
               <span className="sr-only">{title}</span>
               <span className="flex justify-center tracking-[0.15em]" aria-hidden="true">
                 {title.split('').map((letter, index) => (
                   <span
                     key={index}
-                    className={`inline-block text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-serif font-bold transition-all duration-500 ${
-                      phase !== 'zoom' ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-                    }`}
+                    className={`inline-block text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-serif font-bold transition-all duration-500 ${phase !== 'zoom' ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+                      }`}
                     style={{
                       fontFamily: "'EB Garamond', 'Times New Roman', serif",
                       color: 'transparent',
@@ -166,11 +207,10 @@ const IntroAnimation = memo(({ onComplete }: IntroAnimationProps) => {
 
             {/* Subtitle */}
             <div
-              className={`mt-6 md:mt-8 text-center transition-all duration-700 ${
-                phase === 'subtitle' ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-              }`}
+              className={`mt-6 md:mt-8 text-center transition-all duration-700 ${phase === 'subtitle' ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                }`}
             >
-              <p 
+              <p
                 className="text-lg sm:text-xl md:text-2xl lg:text-3xl tracking-[0.5em] uppercase"
                 style={{
                   fontFamily: "'Bebas Neue', sans-serif",
@@ -183,12 +223,12 @@ const IntroAnimation = memo(({ onComplete }: IntroAnimationProps) => {
             </div>
           </motion.div>
 
-          {/* Flickering lines - CSS only */}
+          {/* Flickering lines */}
           <div className="absolute left-0 right-0 h-px bg-red-600/20 top-[30%] animate-intro-flicker" />
           <div className="absolute left-0 right-0 h-px bg-red-600/20 top-[50%] animate-intro-flicker" style={{ animationDelay: '0.5s' }} />
 
-          {/* Scanlines - static */}
-          <div 
+          {/* Scanlines */}
+          <div
             className="absolute inset-0 pointer-events-none opacity-[0.02]"
             style={{
               backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.02) 2px, rgba(255,255,255,0.02) 4px)',

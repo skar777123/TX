@@ -1,6 +1,7 @@
 import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
 import { Cpu, Zap, Globe, Users } from 'lucide-react';
+import AnimatedCounter from '@/components/AnimatedCounter';
 
 const features = [
   {
@@ -33,7 +34,7 @@ const AboutSection = () => {
     <section ref={ref} id="about" className="relative py-32 px-4 overflow-hidden">
       {/* Background Effect */}
       <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-background to-background" />
-      
+
       {/* Decorative Lines */}
       <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
       <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
@@ -51,7 +52,7 @@ const AboutSection = () => {
             ABOUT THE TSƎℲ
           </h2>
           <p className="mt-6 text-lg text-muted-foreground max-w-2xl mx-auto">
-            Step through the portal into a world where technology defies reality. 
+            Step through the portal into a world where technology defies reality.
             TechXpression brings together the brightest minds to explore the unknown.
           </p>
         </motion.div>
@@ -68,7 +69,7 @@ const AboutSection = () => {
             >
               {/* Glow Effect */}
               <div className="absolute inset-0 bg-primary/5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity" />
-              
+
               {/* Icon */}
               <div className="relative mb-4">
                 <feature.icon className="w-10 h-10 text-primary group-hover:animate-pulse" />
@@ -89,28 +90,53 @@ const AboutSection = () => {
           ))}
         </div>
 
-        {/* Stats */}
+        {/* Animated Stats */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={isInView ? { opacity: 1 } : {}}
           transition={{ duration: 0.8, delay: 0.5 }}
           className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-8"
         >
-          {[
-            { value: "5000+", label: "Attendees" },
-            { value: "50+", label: "Events" },
-            { value: "3", label: "Days" },
-            { value: "∞", label: "Memories" }
-          ].map((stat, index) => (
-            <div key={stat.label} className="text-center">
-              <div className="text-4xl md:text-5xl font-display text-primary neon-text-subtle">
-                {stat.value}
-              </div>
-              <div className="text-sm font-stranger tracking-wider text-muted-foreground mt-2">
-                {stat.label}
-              </div>
+          <div className="text-center">
+            <div className="text-4xl md:text-5xl font-display text-primary neon-text-subtle">
+              <AnimatedCounter end={5000} suffix="+" duration={2500} />
             </div>
-          ))}
+            <div className="text-sm font-stranger tracking-wider text-muted-foreground mt-2">
+              Attendees
+            </div>
+          </div>
+
+          <div className="text-center">
+            <div className="text-4xl md:text-5xl font-display text-primary neon-text-subtle">
+              <AnimatedCounter end={15} suffix="+" duration={2000} />
+            </div>
+            <div className="text-sm font-stranger tracking-wider text-muted-foreground mt-2">
+              Events
+            </div>
+          </div>
+
+          <div className="text-center">
+            <div className="text-4xl md:text-5xl font-display text-primary neon-text-subtle">
+              <AnimatedCounter end={3} suffix="" duration={1500} />
+            </div>
+            <div className="text-sm font-stranger tracking-wider text-muted-foreground mt-2">
+              Days
+            </div>
+          </div>
+
+          <div className="text-center">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={isInView ? { opacity: 1, scale: 1 } : {}}
+              transition={{ duration: 0.5, delay: 0.8, type: 'spring', stiffness: 100 }}
+              className="text-4xl md:text-5xl font-display text-primary neon-text-subtle"
+            >
+              ∞
+            </motion.div>
+            <div className="text-sm font-stranger tracking-wider text-muted-foreground mt-2">
+              Memories
+            </div>
+          </div>
         </motion.div>
       </div>
     </section>
